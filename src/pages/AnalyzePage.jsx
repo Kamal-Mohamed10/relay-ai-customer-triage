@@ -8,6 +8,7 @@ function AnalyzePage() {
   const [message, setMessage] = useState('')
   const [results, setResults] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [validationMessage, setValidationMessage] = useState('')
 
   useEffect(() => {
     // Check for example message from home page
@@ -19,24 +20,25 @@ function AnalyzePage() {
   }, [])
 
   const handleAnalyze = async () => {
-    if (!message.trim()) {
-      alert('Please enter a message to analyze')
+    if (message.trim().length < 3) {
+      setValidationMessage('Enter at least 3 characters so the message can be triaged.')
       return
     }
 
+    setValidationMessage('')
     setIsLoading(true)
     setResults(null)
-    
+
     try {
       // Run categorization (LLM call)
       const { category, reasoning } = await categorizeMessage(message)
-      
+
       // Calculate urgency (rule-based)
       const urgency = calculateUrgency(message)
-      
+
       // Get recommended action (template-based)
-      const recommendedAction = getRecommendedAction(category)
-      
+      const recommendedAction = getRecommendedAction(category, urgency)
+
       const analysisResult = {
         message,
         category,
@@ -89,6 +91,11 @@ function AnalyzePage() {
             <div className="text-sm text-gray-500 mt-1">
               {message.length} characters
             </div>
+            {validationMessage && (
+              <p role="alert" className="text-sm text-red-700 mt-2">
+                {validationMessage}
+              </p>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -96,11 +103,9 @@ function AnalyzePage() {
             <button
               onClick={handleAnalyze}
               disabled={isLoading}
-              className={`flex-1 py-3 rounded-lg font-semibold ${
-                isLoading
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              className={'flex-1 py-3 rounded-lg font-semibold ' + (isLoading
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700')}
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -128,7 +133,7 @@ function AnalyzePage() {
         {results && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Analysis Results</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-1">Category</div>
@@ -139,11 +144,11 @@ function AnalyzePage() {
 
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-1">Urgency Level</div>
-                <div className={`inline-block px-4 py-2 rounded-lg font-semibold ${
+                <div className={'inline-block px-4 py-2 rounded-lg font-semibold ' + (
                   results.urgency === 'High' ? 'bg-red-200 text-red-900' :
                   results.urgency === 'Medium' ? 'bg-yellow-200 text-yellow-900' :
                   'bg-green-200 text-green-900'
-                }`}>
+                )}>
                   {results.urgency}
                 </div>
               </div>
@@ -159,9 +164,7 @@ function AnalyzePage() {
                 <div className="text-sm font-semibold text-gray-600 mb-1">AI Reasoning</div>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="prose prose-sm max-w-none text-gray-700">
-                    <ReactMarkdown>
-                      {results.reasoning}
-                    </ReactMarkdown>
+                    <ReactMarkdown>{results.reasoning}</ReactMarkdown>
                   </div>
                 </div>
               </div>
@@ -170,7 +173,7 @@ function AnalyzePage() {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <button
                 onClick={() => {
-                  const text = `Category: ${results.category}\nUrgency: ${results.urgency}\nRecommendation: ${results.recommendedAction}\n\nReasoning: ${results.reasoning}`
+                  const text = 'Category: ' + results.category + '\nUrgency: ' + results.urgency + '\nRecommendation: ' + results.recommendedAction + '\n\nReasoning: ' + results.reasoning
                   navigator.clipboard.writeText(text)
                   alert('Results copied to clipboard!')
                 }}
