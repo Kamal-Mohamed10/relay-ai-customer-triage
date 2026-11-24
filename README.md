@@ -1,121 +1,54 @@
-# Customer Inbox Triage App
+# Relay AI Customer Triage
 
-## Overview
+Small-business support teams using Relay AI need a reliable first pass over growing customer inboxes. Manual triage delays answers and can bury outages or failed payments among routine questions, making it harder to protect customer trust and handle more volume with current staffing.
 
-The Customer Inbox Triage app is a lightweight AI-powered tool that helps classify customer support messages and recommend actions. It uses Groq AI to categorize messages, applies rule-based urgency scoring, and suggests next steps based on predefined templates.
+Relay AI Customer Triage turns an incoming message into a category, an urgency level, and a recommended next step. It prioritizes clear outage signals, routes mixed billing and technical reports for human review, and sends feature requests to the product team.
 
-## Problem Statement
+## What the app does
 
-Support teams waste time manually reading and triaging customer messages. This tool provides an automated first pass at classification to help prioritize and route messages more efficiently.
+- Classifies messages as a billing issue, technical problem, general inquiry, feature request, or unknown.
+- Scores urgency using repeatable signals from the message, independent of the time of day.
+- Recommends a category-specific action and highlights high-urgency reports for prompt human review.
+- Keeps a local history of analyzed messages and shows basic triage analytics.
 
-## Tech Stack
+## How it works
 
-- **Frontend**: React + Vite + Tailwind CSS
-- **AI**: Groq API (Llama 3.3 70B - Free tier)
-- **Runtime**: Browser-based (local development only)
+1. Paste a customer message into the Analyze screen.
+2. The app asks Groq's Llama model for a category and short explanation using a constrained JSON response.
+3. If the message contains both billing and technical signals, or the model is unavailable, a deterministic fallback routes it to a supported category or human review.
+4. Rule-based urgency scoring and category-specific templates produce the next-step recommendation.
+5. The result is saved in browser `localStorage` for the History and Dashboard screens.
 
-## Setup Instructions
+## Run locally
 
-### Prerequisites
+Requirements: Node.js 16 or newer and npm.
 
-- Node.js (v16 or higher)
-- npm or yarn
-- Groq API key (FREE - get from https://console.groq.com)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd "L2 assessment"
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure Groq API Key**
-   
-   Create a `.env.local` file in the root directory:
-   ```bash
-   cp .env.example .env.local
-   ```
-   
-   Edit `.env.local` and add your Groq API key:
-   ```
-   VITE_GROQ_API_KEY=gsk_your-actual-key-here
-   ```
-   
-   Get your FREE API key from: https://console.groq.com/keys
-   
-   **Why Groq?** Groq offers a generous free tier with fast inference and no credit card required!
-
-4. **Run the application**
-   ```bash
-   npm run dev
-   ```
-   
-   The app will be available at `http://localhost:5173`
-
-## How It Works
-
-1. **Paste Message**: User pastes a customer support message into the text area
-2. **Analyze**: Click "Analyze Message" to process the input
-3. **Classification**: The app runs three processes in parallel:
-   - **Category Classification** (LLM): Uses Groq AI (Llama 3.3 70B) to categorize the message
-   - **Urgency Scoring** (Rule-based): Applies simple rules to determine urgency
-   - **Recommendation** (Template-based): Maps category to a recommended action
-4. **Display Results**: Shows category, urgency tag, recommended action, and AI reasoning
-5. **History**: All analyses are saved to localStorage and viewable in the History tab
-
-
-## Example Test Messages
-
-Try analyzing these messages to see how the triage system works:
-
-### Example 1: Production Issue
-```
-Our production server is down
+```bash
+git clone https://github.com/Kamal-Mohamed10/relay-ai-customer-triage.git
+cd relay-ai-customer-triage
+npm install
+cp .env.example .env.local
 ```
 
-### Example 2: Customer Feedback
-```
-Hi there! I just wanted to say thank you for your amazing customer service. I've been using your product for three years now and I'm really happy with it. Keep up the great work!
-```
+Add a Groq API key to `.env.local`:
 
-### Example 3: Feature Request
-```
-I would love to see a dark mode option in the app. It would be much easier on my eyes during night time usage.
+```text
+VITE_GROQ_API_KEY=your-key
 ```
 
-### Example 4: Payment Issue
-```
-I tried to update my payment method but the page keeps loading forever. Is this a known issue?
-```
+Start the development server:
 
-### Example 5: Billing Question
-```
-Can I upgrade my subscription to the pro plan?
+```bash
+npm run dev
 ```
 
-### Example 6: Technical Support
-```
-The dashboard won't load when I try to access it. I've tried refreshing but it keeps timing out.
-```
+## Example messages
 
-## Security Note
+- Database connection lost → technical problem, high urgency.
+- Thank you so much! Your team has been incredibly helpful. → low urgency feedback.
+- Could you add an export to CSV feature? → feature request routed to product review.
+- My payment failed and now I can't access the dashboard. → human review for mixed billing and technical signals.
 
-⚠️ **Warning**: This application exposes the Groq API key in the browser (using `dangerouslyAllowBrowser: true`). This is acceptable for local development only but should **NEVER** be done in production. In a real application, API calls should be made from a secure backend server.
+## Limitations and next steps
 
-## Why Groq?
-
-- ✅ **Completely Free** - No credit card required
-- ✅ **Fast Inference** - Groq's LPU technology is incredibly fast
-- ✅ **Generous Limits** - ~14,400 requests/day on free tier
-- ✅ **High Quality** - Llama 3.3 70B performs excellently
-- ✅ **Easy Signup** - Get started in minutes at https://console.groq.com
-
-## License
-
-This project is for educational purposes only.
+The urgency rules and fallback classifier are starting points and should be evaluated against a labeled set of real support messages. The demo stores history only in the current browser. The Groq key is used in a browser client for local development, so this setup should not be deployed to production; production use needs a server-side API and secure key storage.
